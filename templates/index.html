@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweetTrends</title>
+    <style>
+        :root {
+            --primary-color: #2394F0;
+            --secondary-color: #f34336;
+            --background-color: #232532;
+            --surface-color: #1A1B27;
+            --text-color: #ffffff;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            gap: 12px;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .welcome-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: rainbow 6s linear infinite;
+        }
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .welcome-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #b8b8b8;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            margin-top: 2rem;
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        input[type="text"] {
+            width: calc(100% - 120px);
+            padding: 0.75rem;
+            margin-bottom: 0;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px 0 0 4px;
+            background-color: #2a2a2a;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #1a75c0;
+        }
+        .form-row {
+            display: flex;
+            align-items: stretch;
+        }
+        .form-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        #loading-container {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+        .loader {
+            border: 3px solid #3f3f3f;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0;
+        }
+        #progress-text {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            margin: 0;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <h1>TweetTrends</h1>
+            <img src="{{ url_for('static', filename='app_logo.png') }}" alt="TweetTrends Logo" class="logo">
+        </div>
+    </header>
+    <div class="container">
+        <div class="welcome-container">
+            <h2 class="welcome-title">Welcome to TweetTrends!</h2>
+            <p class="welcome-description">
+                Our app helps you analyze the sentiment on any given topic on Twitter with just one click. 
+                Enter a topic or keyword, and we'll provide you with an insightful overview of the latest tweets, 
+                highlighting both positive and negative sentiments.
+            </p>
+        </div>
+        <form id="search-form" action="{{ url_for('search') }}" method="POST">
+            <label for="query">Enter your query:</label>
+            <div class="form-row">
+                <input type="text" id="query" name="query" required>
+                <button type="submit">Search</button>
+                <div id="loading-container">
+                    <div class="loader"></div>
+                    <p id="progress-text">Initializing...</p>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var query = document.getElementById('query').value;
+            var loadingContainer = document.getElementById('loading-container');
+            var progressText = document.getElementById('progress-text');
+            
+            loadingContainer.style.display = 'flex';
+            
+            var steps = ['Fetching tweets...', 'Analyzing sentiment...', 'Processing results...'];
+            var currentStep = 0;
+
+            function updateProgress() {
+                if (currentStep < steps.length) {
+                    progressText.textContent = steps[currentStep];
+                    currentStep++;
+                    setTimeout(updateProgress, 2000); // Update every 2 seconds
+                }
+            }
+
+            updateProgress();
+
+            fetch('{{ url_for("search") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'query=' + encodeURIComponent(query)
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingContainer.style.display = 'none';
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
+

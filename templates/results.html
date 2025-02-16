@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweetTrends - Search Results</title>
+    <style>
+        :root {
+            --primary-color: #2394F0;
+            --secondary-color: #f34336;
+            --background-color: #232532;
+            --surface-color: #1A1B27;
+            --text-color: #ffffff;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            gap: 12px;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+        }
+        h1, h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: var(--surface-color);
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            background-color: var(--surface-color);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+        .icon-heart {
+            fill: #f34336;
+        }
+        .icon-retweet {
+            fill: #2394F0;
+        }
+    </style>
+</head>
+<body>
+<svg style="display: none;">
+    <symbol id="icon-heart" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </symbol>
+    <symbol id="icon-retweet" viewBox="0 0 24 24">
+        <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"/>
+    </symbol>
+</svg>
+    <header>
+        <div class="logo-container">
+            <h1>TweetTrends</h1>
+            <img src="{{ url_for('static', filename='app_logo.png') }}" alt="TweetTrends Logo" class="logo">
+        </div>
+    </header>
+    <div class="container">
+        <h1>Search Results for "{{ query }}"</h1>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">{{ positive_percent }}%</div>
+                <div>Positive Tweets</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ negative_percent }}%</div>
+                <div>Negative Tweets</div>
+            </div>
+        </div>
+        <h2>Top 5 Positive Tweets</h2>
+        <ul>
+            {% for tweet in top_positive.itertuples() %}
+                <li>
+                    <a href="{{ tweet.Tweet_Link }}" target="_blank">{{ tweet.Text }}</a>
+                    <div>
+                        <svg class="icon icon-retweet"><use xlink:href="#icon-retweet"></use></svg>{{ tweet.Retweets }}
+                        <svg class="icon icon-heart"><use xlink:href="#icon-heart"></use></svg>{{ tweet.Likes }}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        <h2>Top 5 Negative Tweets</h2>
+        <ul>
+            {% for tweet in top_negative.itertuples() %}
+                <li>
+                    <a href="{{ tweet.Tweet_Link }}" target="_blank">{{ tweet.Text }}</a>
+                    <div>
+                        <svg class="icon icon-retweet"><use xlink:href="#icon-retweet"></use></svg>{{ tweet.Retweets }}
+                        <svg class="icon icon-heart"><use xlink:href="#icon-heart"></use></svg>{{ tweet.Likes }}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
+
