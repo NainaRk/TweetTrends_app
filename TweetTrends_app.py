@@ -45,14 +45,12 @@ def process_pipeline(input_file, output_file):
 # Scrape tweets function
 async def scrape_tweets(query, output_file):
     print("Scraping tweets...")
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    username = config['X']['username']
-    email = config['X']['email']
-    password = config['X']['password']
+    username = os.getenv("X_USERNAME")
+    email = os.getenv("X_EMAIL")
+    password = os.getenv("X_PASSWORD")
     client = Client(language='en-US')
-    #await client.login(auth_info_1=username, auth_info_2=email, password=password)
-    #client.save_cookies('cookies.json') 
+    await client.login(auth_info_1=username, auth_info_2=email, password=password)
+    client.save_cookies('cookies.json') 
     client.load_cookies('cookies.json')
 
     tweet_count = 0
