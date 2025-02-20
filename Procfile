@@ -1,1 +1,1 @@
-web: gunicorn app:app
+web: gunicorn TweetTrends_app:app
