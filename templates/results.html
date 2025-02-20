@@ -124,7 +124,7 @@
         </div>
         <h2>Top 5 Positive Tweets</h2>
         <ul>
-            {% for tweet in top_positive.itertuples() %}
+            {% for tweet in top_positive %}
                 <li>
                     <a href="{{ tweet.Tweet_Link }}" target="_blank">{{ tweet.Text }}</a>
                     <div>
@@ -136,7 +136,7 @@
         </ul>
         <h2>Top 5 Negative Tweets</h2>
         <ul>
-            {% for tweet in top_negative.itertuples() %}
+            {% for tweet in top_negative %}
                 <li>
                     <a href="{{ tweet.Tweet_Link }}" target="_blank">{{ tweet.Text }}</a>
                     <div>
@@ -149,4 +149,3 @@
     </div>
 </body>
 </html>
-

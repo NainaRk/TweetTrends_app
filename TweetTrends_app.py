@@ -14,6 +14,21 @@ from flask import Flask, request, render_template
 # Configuration
 MINIMUM_TWEETS = 100
 
+# Load Configuration
+def load_config():
+    config = configparser.ConfigParser()
+    config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found at {config_path}")
+
+    config.read(config_path)
+
+    if 'X' not in config:
+        raise KeyError("Config file is missing the [X] section")
+
+    return config['X']
+
 # Function to clean tweet text
 def clean_text(text):
     text = re.sub(r"http\S+|www\S+|https\S+", '', text, flags=re.MULTILINE)  # Remove URLs
@@ -45,13 +60,21 @@ def process_pipeline(input_file, output_file):
 # Scrape tweets function
 async def scrape_tweets(query, output_file):
     print("Scraping tweets...")
-    username = os.getenv("X_USERNAME")
-    email = os.getenv("X_EMAIL")
-    password = os.getenv("X_PASSWORD")
+    
+    config_data = load_config()
+    username = config_data['username']
+    email = config_data['email']
+    password = config_data['password']
+
     client = Client(language='en-US')
-    await client.login(auth_info_1=username, auth_info_2=email, password=password)
-    client.save_cookies('cookies.json') 
-    client.load_cookies('cookies.json')
+
+    try:
+        await client.login(auth_info_1=username, auth_info_2=email, password=password)
+        client.save_cookies('cookies.json') 
+        client.load_cookies('cookies.json')
+    except Exception as e:
+        print(f"Login failed: {e}")
+        return "Error: Failed to log in to Twitter/X", 500
 
     tweet_count = 0
     tweets = None
@@ -69,7 +92,7 @@ async def scrape_tweets(query, output_file):
                     tweets = await tweets.next()
             except TooManyRequests as e:
                 rate_limit_reset = datetime.fromtimestamp(e.rate_limit_reset)
-                sleep((rate_limit_reset - datetime.now()).total_seconds())
+                sleep(max(0, (rate_limit_reset - datetime.now()).total_seconds()))
                 continue
 
             if not tweets:
@@ -114,15 +137,36 @@ def index():
 @app.route('/search', methods=['POST'])
 def search():
     query = request.form['query']
-    asyncio.run(main(query))
-    df = pd.read_csv('tweets_processed.csv')
-    positive_percent = round((df['Sentiment'] == 'Positive').mean() * 100)
-    negative_percent = round((df['Sentiment'] == 'Negative').mean() * 100)
-    top_positive = df[df['Sentiment'] == 'Positive'].nlargest(5, ['Retweets', 'Likes'])
-    top_negative = df[df['Sentiment'] == 'Negative'].nlargest(5, ['Retweets', 'Likes'])
-    return render_template('results.html', query=query, positive_percent=positive_percent, negative_percent=negative_percent, top_positive=top_positive, top_negative=top_negative)
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main(query))
+
+        if not os.path.exists('tweets_processed.csv'):
+            return "Error: Processed tweets file not found!", 500
+
+        df = pd.read_csv('tweets_processed.csv')
+
+        positive_percent = round((df['Sentiment'] == 'Positive').mean() * 100)
+        negative_percent = round((df['Sentiment'] == 'Negative').mean() * 100)
+
+        # Convert to a list of dictionaries
+        top_positive = df[df['Sentiment'] == 'Positive'].nlargest(5, ['Retweets', 'Likes']).to_dict(orient='records')
+        top_negative = df[df['Sentiment'] == 'Negative'].nlargest(5, ['Retweets', 'Likes']).to_dict(orient='records')
+
+        return render_template(
+            'results.html',
+            query=query,
+            positive_percent=positive_percent,
+            negative_percent=negative_percent,
+            top_positive=top_positive,
+            top_negative=top_negative
+        )
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return f"Internal Server Error: {str(e)}", 500
 
 if __name__ == '__main__':
-    #app.run(debug=True)
-    port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
